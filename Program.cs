@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.IO;
 
 List<Kurz> kurzy = new List<Kurz>();
 bool online = true;
@@ -10,6 +11,8 @@ while (online)
     Console.WriteLine("2 - Pridat studenta do kurzu");
     Console.WriteLine("3 - Vypisat vsetky kurzy");
     Console.WriteLine("4 - Ukoncit program");
+    Console.WriteLine("5 - Ulozit kurzy do suboru");
+    Console.WriteLine("6 - Nacitat kurzy zo suboru");
     Console.Write("Zadaj volbu:");
 
     string vstup = Console.ReadLine();
@@ -86,6 +89,82 @@ while (online)
     else if (volba == 4)
     {
         online = false;
+    }
+    else if (volba == 5)
+    {
+        if(kurzy.Count == 0)
+        {
+            Console.WriteLine("Nie su ziadne kurzy na ulozenie.");
+        }
+        else
+        {
+            string cesta = "kurzy.txt";
+            try
+            {
+                string data = "";
+                foreach (var kurz in kurzy)
+                {
+                    data += $"KURZ;{kurz.Nazov};{kurz.MaxKapacita}\n";
+
+                    foreach (var student in kurz.Studenti)
+                    {
+                        data += $"STUDENT;{student.Meno};{student.Vek}\n";
+                    }
+                }
+                File.WriteAllText(cesta, data);
+                Console.WriteLine("Kurzy boli uspesne ulozene do suboru.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Chyba pri zapise do suboru: {ex.Message}");
+            }
+        }
+    }
+    else if(volba == 6)
+    {
+        string cesta = "kurzy.txt";
+
+        if (!File.Exists(cesta))
+        {
+            Console.WriteLine("Subor s kurzami neexistuje.");
+        } else
+        {
+            try
+            {
+                kurzy.Clear();
+
+                string[] riadky = File.ReadAllLines(cesta);
+                Kurz aktualnyKurz = null;
+                foreach (string riadok in riadky)
+                {
+                    if (string.IsNullOrWhiteSpace(riadok))
+                        continue;
+
+                    string[] casti = riadok.Split(';');
+
+                    if (casti[0] == "KURZ")
+                    {
+                        string nazov = casti[1];
+                        int maxKapacita = Convert.ToInt32(casti[2]);
+                        aktualnyKurz = new Kurz(nazov, maxKapacita);
+                        kurzy.Add(aktualnyKurz);
+                    }
+                    else if (casti[0] == "STUDENT" && aktualnyKurz != null)
+                    {
+                        string meno = casti[1];
+                        int vek = Convert.ToInt32(casti[2]);
+
+                        Student s = new Student(meno, vek);
+                        aktualnyKurz.PridajStudenta(s);
+                    }
+                }
+                Console.WriteLine("Kurzy boli uspesne nacitane zo suboru.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Chyba pri citani zo suboru: {ex.Message}");
+            }
+        }
     }
     else
     {
